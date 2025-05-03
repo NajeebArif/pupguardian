@@ -68,10 +68,10 @@ export class SettingsPanel {
         this._panel.webview.postMessage({
             command: 'loadSettings',
             settings: {
-                hardcoreMode: config.get('enableHardcoreMode'),
-                workDuration: config.get('workDuration'),
-                breakDuration: config.get('breakDuration'),
-                enableSounds: config.get('enableSounds')
+                workDuration: config.get('workDuration', 20), // Explicit default
+                breakDuration: config.get('breakDuration', 20),
+                longBreakInterval: config.get('longBreakInterval', 4),
+                longBreakMultiplier: config.get('longBreakMultiplier', 1.5)
             }
         });
     }
@@ -265,6 +265,8 @@ export class SettingsPanel {
             
             
             <button id="applyButton">💾 Apply Settings</button>
+
+            <button id="resetDefaults">Reset to Defaults</button>
             
             <script>
                 const vscode = acquireVsCodeApi();
@@ -275,8 +277,9 @@ export class SettingsPanel {
                     if (message.command === 'loadSettings') {
                         document.getElementById('hardcoreMode').checked = message.settings.hardcoreMode;
                         document.getElementById('enableSounds').checked = message.settings.enableSounds;
-                        document.getElementById('workDuration').value = message.settings.workDuration;
-                        document.getElementById('breakDuration').value = message.settings.breakDuration;
+                        document.getElementById('workDuration').value = message.settings.workDuration || 20;
+                        document.getElementById('breakDuration').value = message.settings.breakDuration || 20;
+                        document.getElementById('longBreakInterval').value = message.settings.longBreakInterval || 4;
                     }
                 });
                 
@@ -291,6 +294,13 @@ export class SettingsPanel {
                             breakDuration: document.getElementById('breakDuration').value
                         }
                     });
+                });
+
+                document.getElementById('resetDefaults').addEventListener('click', () => {
+                    document.getElementById('workDuration').value = 20;
+                    document.getElementById('breakDuration').value = 20;
+                    document.getElementById('longBreakInterval').value = 4;
+                    document.getElementById('longBreakMultiplier').value = 1.5;
                 });
                 
                 // Request settings on load

@@ -101,9 +101,10 @@ function triggerBreak(context: vscode.ExtensionContext, gameState: GameState) {
 function getBreakDuration(config: vscode.WorkspaceConfiguration): number {
     const baseDuration = config.get<number>('breakDuration', 20);
     const longBreakInterval = config.get<number>('longBreakInterval', 4);
-    
+    const multiplier = config.get<number>('longBreakMultiplier', 1.5);
+
     return state.sessionCount % longBreakInterval === 0
-        ? baseDuration * 1.5
+        ? Math.floor(baseDuration * multiplier)
         : baseDuration;
 }
 
