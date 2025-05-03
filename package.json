@@ -1,8 +1,14 @@
 {
   "name": "pupguardian",
+  "publisher": "NajeebArif",
   "displayName": "PupGuardian",
   "description": "Enforces 20/20/20 rule to avoid Computer Vision Syndrome.",
   "version": "0.0.1",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NajeebArif/pupguardian"
+  },
   "engines": {
     "vscode": "^1.99.0"
   },

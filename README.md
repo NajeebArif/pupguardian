@@ -61,7 +61,7 @@ code --uninstall-extension your-extension-name
 For quick uninstall and fresh install:
 
 ```
-code --uninstall-extension pupguardian
+code --uninstall-extension NajeebArif.pupguardian
 rm -rf ~/.vscode/extensions/pupguardian*
 npm run package && code --install-extension *.vsix
 ```
