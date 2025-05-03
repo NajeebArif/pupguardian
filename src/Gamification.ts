@@ -8,10 +8,13 @@ export interface GameState {
     accessories: string[];
     addXP: (points: number) => void;
     getCurrentSprite: () => string;
+    isInBreak: boolean;
+    readonly onDidChange: vscode.Event<void>;
 }
 
 export function setupGamification(context: vscode.ExtensionContext): GameState {
     const storedState = context.globalState.get<Partial<GameState>>('gameState') || {};
+    const changeEmitter = new vscode.EventEmitter<void>();
     
     const state: GameState = {
         workMinutes: 0,
@@ -31,13 +34,21 @@ export function setupGamification(context: vscode.ExtensionContext): GameState {
                     vscode.window.showInformationMessage('New accessory unlocked!');
                 }
             }
-            context.globalState.update('gameState', this);
+            context.globalState.update('gameState', {
+                xp: this.xp,
+                level: this.level,
+                accessories: this.accessories
+            });
+
+            changeEmitter.fire();
         },
+        onDidChange: changeEmitter.event,
         getCurrentSprite() { // Fixed: Proper method syntax binds 'this'
             return getPuppySprite({
                 accessories: this.accessories
             });
-        }
+        },
+        isInBreak: false,
     };
 
     return state;
