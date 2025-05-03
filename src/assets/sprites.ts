@@ -1,11 +1,12 @@
-import * as vscode from 'vscode';
-
 export const PUPPY_SPRITES = {
     default: '(°ᴥ°)ﾉ',
-    withSunglasses: '(⌐■_■)ﾉ',
-    withBandana: '(°ᴥ°)︻╦̵̵̿╤──',
+    looking: '(◕ᴥ◕)',
+    warning: '(✧ᴥ✧)',
     eating: '(╹ᴥ╹)🍖',
-    sleeping: '(∪｡∪)｡｡｡zzz'
+    sleeping: '(∪｡∪)｡｡｡zzz',
+    withSunglasses: '(⌐■_■)ﾉ',
+    withBandana: '(°ᴥ°)~☆',
+    excited: 'ヾ(°∇°*)'
 };
 
 export function getPuppySprite(state: { accessories: string[] }): string {
@@ -16,8 +17,4 @@ export function getPuppySprite(state: { accessories: string[] }): string {
         return PUPPY_SPRITES.withBandana;
     }
     return PUPPY_SPRITES.default;
-}
-
-export function getSpriteUri(context: vscode.ExtensionContext, spriteName: string): vscode.Uri {
-    return vscode.Uri.joinPath(context.extensionUri, 'assets', 'sprites', `${spriteName}.png`);
 }

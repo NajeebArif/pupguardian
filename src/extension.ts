@@ -2,95 +2,165 @@ import * as vscode from 'vscode';
 import { SettingsPanel } from './SettingsPanel';
 import { activateHardcoreMode } from './HardcoreMode';
 import { GameState, setupGamification } from './Gamification';
+import { PUPPY_SPRITES } from './assets/sprites';
 
-let workInterval: NodeJS.Timeout;
-let sessionCount = 0;
+interface BreakState {
+    isActive: boolean;
+    timer?: NodeJS.Timeout;
+    sessionCount: number;
+}
+
+let puppy: vscode.StatusBarItem;
+
+let state: {
+    isActive: boolean;
+    timer?: NodeJS.Timeout;
+    sessionCount: number;
+} = { isActive: false, sessionCount: 0 };
+
+function initializePuppy(gameState: GameState) {
+    puppy.text = gameState.getCurrentSprite();
+    puppy.tooltip = "PupGuardian - Your eye health companion";
+}
 
 export function activate(context: vscode.ExtensionContext) {
-    // Initialize gamification
-	console.log('Pup Guardian started!');
-	const config = vscode.workspace.getConfiguration('pupguardian');
     const gameState = setupGamification(context);
     
-    // Status Bar Puppy
-    const puppy = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-    puppy.text = gameState.getCurrentSprite();
-    puppy.command = 'pupguardian.openSettings';
+    // Initialize status bar
+    puppy = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+    updatePuppySprite(gameState);
     puppy.show();
 
-    // 20/20/20 Timer
-    
-    function startTimer() {
-		const workMinutes = config.get<number>('workDuration', 20);
-        const breakSeconds = config.get<number>('breakDuration', 20);
-
-        workInterval = setInterval(() => {
-            gameState.workMinutes++;
-            if (gameState.workMinutes >= workMinutes) {
-				sessionCount++;
-                triggerBreak(breakSeconds);
-                gameState.workMinutes = 0;
-            }
-        }, 60 * 1000);
-    }
-
-    function triggerBreak(breakSeconds: number) {
-        const config = vscode.workspace.getConfiguration('pupguardian');
-        
-        // Check for long break
-        const longBreakInterval = config.get<number>('longBreakInterval', 4);
-        const isLongBreak = sessionCount % longBreakInterval === 0;
-        
-        if (isLongBreak) {
-            breakSeconds *= 1.5; // 50% longer break
-            vscode.window.showInformationMessage('🐕 Time for a LONG break!');
-        }
-        config.get('enableHardcoreMode') 
-            ? activateHardcoreMode(context, gameState, breakSeconds)
-            : showRegularBreak(breakSeconds);
-    }
+    // Start the first work session
+    scheduleNextBreak(context, gameState);
 
     // Commands
     context.subscriptions.push(
         vscode.commands.registerCommand('pupguardian.openSettings', () => {
             SettingsPanel.createOrShow(context);
         }),
-		puppy,
-		new vscode.Disposable(() => clearInterval(workInterval))
+        puppy,
+        new vscode.Disposable(() => {
+            if (state.timer) {clearTimeout(state.timer);}
+        })
     );
 
-    startTimer();
+    // Reset on config changes
+    context.subscriptions.push(
+        vscode.workspace.onDidChangeConfiguration(e => {
+            if (e.affectsConfiguration('pupguardian')) {
+                resetScheduler(context, gameState);
+            }
+        })
+    );
 }
 
-function showRegularBreak(breakSeconds: number) {
-    vscode.window.showInformationMessage(
-        `🐶 Time for a ${breakSeconds} second break! Look away!`,
-        'Start Break'
-    ).then(selection => {
-        if (selection) {
-            vscode.window.withProgress({
-                location: vscode.ProgressLocation.Notification,
-                title: "Eye Break",
-                cancellable: false
-            }, (progress) => {
-                return new Promise(resolve => {
-                    let secondsLeft = breakSeconds;
-                    const interval = setInterval(() => {
-                        secondsLeft--;
-                        progress.report({
-                            message: `${secondsLeft}s remaining`
-                        });
-                        if (secondsLeft <= 0) {
-                            clearInterval(interval);
-                            resolve(null);
+function updatePuppySprite(gameState: GameState) {
+    puppy.text = gameState.getCurrentSprite();
+    puppy.tooltip = `Level ${gameState.level} | XP: ${gameState.xp}/${gameState.level * 100}`;
+}
+
+function resetScheduler(context: vscode.ExtensionContext, gameState: GameState) {
+    if (state.timer) {clearTimeout(state.timer);}
+    state = { isActive: false, sessionCount: 0 };
+    scheduleNextBreak(context, gameState);
+}
+
+function scheduleNextBreak(context: vscode.ExtensionContext, gameState: GameState) {
+    if (state.isActive) {return;}
+
+    const config = vscode.workspace.getConfiguration('pupguardian');
+    const workMinutes = config.get<number>('workDuration', 20);
+    
+    state.timer = setTimeout(() => {
+        state.sessionCount++;
+        triggerBreak(context, gameState);
+    }, workMinutes * 60 * 1000);
+
+    console.log(`Next break in ${workMinutes} minutes`);
+}
+
+function triggerBreak(context: vscode.ExtensionContext, gameState: GameState) {
+    if (state.isActive || gameState.isInBreak) return;
+    
+    state.isActive = true;
+    const config = vscode.workspace.getConfiguration('pupguardian');
+    const breakSeconds = getBreakDuration(config);
+    
+    const breakPromise = config.get('enableHardcoreMode')
+        ? activateHardcoreMode(context, gameState, breakSeconds)
+        : showRegularBreak(context, gameState, breakSeconds);
+
+    breakPromise.finally(() => {
+        state.isActive = false;
+        puppy.text = gameState.getCurrentSprite();
+        scheduleNextBreak(context, gameState);
+    });
+}
+
+function getBreakDuration(config: vscode.WorkspaceConfiguration): number {
+    const baseDuration = config.get<number>('breakDuration', 20);
+    const longBreakInterval = config.get<number>('longBreakInterval', 4);
+    
+    return state.sessionCount % longBreakInterval === 0
+        ? baseDuration * 1.5
+        : baseDuration;
+}
+
+async function showRegularBreak(context: vscode.ExtensionContext, gameState: GameState, breakSeconds: number): Promise<void> {
+    return new Promise((resolve) => {
+        if (gameState.isInBreak) return;
+        gameState.isInBreak = true;
+
+        const originalSprite = gameState.getCurrentSprite();
+        let countdownInterval: NodeJS.Timeout | undefined;
+        let remaining = breakSeconds;
+
+        // Persistent notification
+        const breakPromise = vscode.window.showInformationMessage(
+            `🐶 ${PUPPY_SPRITES.looking} Time for a ${breakSeconds}s break!`,
+            { modal: false },
+            { title: "Start Break", action: 'start' },
+            { title: "Snooze 5min", action: 'snooze' }
+        );
+
+        breakPromise.then(selection => {
+            if (!selection) {
+                // User closed the notification
+                puppy.text = originalSprite;
+                gameState.isInBreak = false;
+                resolve();
+                return;
+            }
+
+            switch (selection.action) {
+                case 'start':
+                    puppy.text = `⏳ ${remaining}s`;
+                    countdownInterval = setInterval(() => {
+                        remaining--;
+                        puppy.text = `⏳ ${remaining}s`;
+                        
+                        if (remaining <= 0) {
+                            clearInterval(countdownInterval);
+                            puppy.text = gameState.getCurrentSprite();
+                            gameState.isInBreak = false;
+                            resolve();
                         }
                     }, 1000);
-                });
-            });
-        }
+                    break;
+
+                case 'snooze':
+                    vscode.window.showInformationMessage('⏸️ Break snoozed for 5 minutes');
+                    puppy.text = originalSprite;
+                    gameState.isInBreak = false;
+                    setTimeout(() => triggerBreak(context, gameState), 300000); // 5 min
+                    resolve();
+                    break;
+            }
+        });
     });
 }
 
 export function deactivate() {
-    clearInterval(workInterval);
+    if (state.timer) {clearTimeout(state.timer);}
 }
