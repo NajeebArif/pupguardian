@@ -1,71 +1,67 @@
-# pupguardian README
+# PupGuardian - Local Development Setup
 
-This is the README for your extension "pupguardian". After writing up a brief description, we recommend including the following sections.
+🐶 A VS Code extension that protects your eyesight with gamified 20/20/20 rule reminders  
+*(Designed for local development use only)*
 
-## Features
+## Prerequisites
+- [Node.js](https://nodejs.org/) (v16+)
+- [VS Code](https://code.visualstudio.com/) (v1.75+)
+- [TypeScript](https://www.typescriptlang.org/) (v4.9+)
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+## Installation from Source
 
-For example if there is an image subfolder under your extension project workspace:
+### 1. Clone the repository
+```bash
+git clone https://github.com/your-repo/pupguardian.git
+cd pupguardian
+```
+### 2. Install dependencies
+```
+npm install
+```
 
-\!\[feature X\]\(images/feature-x.png\)
+### 3. Build the extension
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+```
+npm run compile
+```
 
-## Requirements
+### 4. Install in VS Code
+```
+npx vsce package
+```
+or
+```
+npm run package
+```
+Once the vsix file is generated, then install it via the command or manually in VS Code.
+```
+code --install-extension pupguardian-1.0.0.vsix
+```
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+## Disabling the Extension
+Open VS Code
 
-## Extension Settings
+Press Ctrl+Shift+P (Cmd+Shift+P on Mac)
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+Search for: Extensions: Disable Extension
 
-For example:
+Select "PupGuardian"
 
-This extension contributes the following settings:
+## Uninstalling
+```
+code --uninstall-extension your-extension-name
+```
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
 
-## Known Issues
+-----
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+## Developers:
 
-## Release Notes
+For quick uninstall and fresh install:
 
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+```
+code --uninstall-extension pupguardian
+rm -rf ~/.vscode/extensions/pupguardian*
+npm run package && code --install-extension *.vsix
+```
