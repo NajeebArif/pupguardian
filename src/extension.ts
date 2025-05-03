@@ -119,7 +119,7 @@ async function showRegularBreak(context: vscode.ExtensionContext, gameState: Gam
         // Persistent notification
         const breakPromise = vscode.window.showInformationMessage(
             `🐶 ${PUPPY_SPRITES.looking} Time for a ${breakSeconds}s break!`,
-            { modal: true },
+            { modal: false },
             { title: "Start Break", action: 'start' },
             { title: "Snooze 5min", action: 'snooze' }
         );
