@@ -1,0 +1,84 @@
+{
+  "name": "pupguardian",
+  "displayName": "PupGuardian",
+  "description": "Enforces 20/20/20 rule to avoid Computer Vision Syndrome.",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.99.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "files": [
+    "dist/**/*.js",
+    "assets/**/*",
+    "out/**/*.js",
+    "src/**/*.ts"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "pupguardian.openSettings",
+        "title": "PupGuardian: Open Settings"
+      }
+    ],
+    "configuration": {
+      "title": "PupGuardian",
+      "properties": {
+        "pupguardian.enableHardcoreMode": {
+          "type": "boolean",
+          "default": false,
+          "description": "Force unskippable breaks that lock your editor"
+        },
+        "pupguardian.enableSounds": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable playful sound effects"
+        },
+        "pupguardian.workDuration": {
+          "type": "number",
+          "default": 20,
+          "minimum": 1,
+          "maximum": 120,
+          "description": "Work duration in minutes before break (for testing use lower values like 1)"
+        },
+        "pupguardian.breakDuration": {
+          "type": "number",
+          "default": 20,
+          "minimum": 5,
+          "maximum": 60,
+          "description": "Break duration in seconds (for testing use lower values like 5)"
+        },
+        "pupguardian.longBreakInterval": {
+          "type": "number",
+          "default": 4,
+          "description": "Number of work sessions before a long break"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.99.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "20.x",
+    "@typescript-eslint/eslint-plugin": "^8.31.1",
+    "@typescript-eslint/parser": "^8.31.1",
+    "eslint": "^9.25.1",
+    "typescript": "^5.8.3",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.5.2"
+  }
+}
